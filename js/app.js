@@ -128,54 +128,82 @@
     // simpan isian bila layar dirender ulang (mis. pengaturan aplikasi baru selesai dimuat)
     const lamaUser = document.getElementById('lUser'), lamaPass = document.getElementById('lPass'), lamaIngat = document.getElementById('lIngat');
     const simpanan = lamaUser ? { u: lamaUser.value, p: lamaPass.value, i: lamaIngat.checked, fokus: document.activeElement && document.activeElement.id } : null;
+    const sapa = (() => { const j = new Date().getHours(); return j < 11 ? 'Selamat pagi' : j < 15 ? 'Selamat siang' : j < 18 ? 'Selamat sore' : 'Selamat malam'; })();
+    const intro = Date.now() - (App._loginRender || 0) > 4000;      // animasi masuk hanya sekali (bukan saat render ulang)
+    App._loginRender = Date.now();
+    const kata = esc(app.nama_app).split(' ').map((k, i) => '<span class="kata" style="--d:' + (i * 90 + 250) + 'ms">' + k + '</span>').join(' ');
+    const node = (cls, isi) => '<span class="node ' + cls + '">' + isi + '</span>';
     document.getElementById('app').innerHTML =
-      '<main class="login">' +
+      '<main class="login' + (intro ? ' intro' : '') + '">' +
+        '<canvas class="lg-net" aria-hidden="true"></canvas>' +
         '<div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>' +
         '<section class="login-hero">' +
           '<span class="access-pill"><i></i> Akses Tertutup • Khusus Terdaftar</span>' +
-          '<div class="logo-tile">' + (app.logo_url ? UI.logoHtml(app, 'mono') : '<span class="mono">' + esc(UI.fmt.inisial(app.nama_app).slice(0, 1)) + '<b>' + esc(UI.fmt.inisial(app.nama_app).slice(1, 2)) + '</b></span>') +
-            '<span class="cap">' + ic('cap', 18) + '</span></div>' +
-          '<h1>' + esc(app.nama_app) + '</h1><p>' + esc(app.tagline || '') + '</p>' +
-          '<div class="login-points"><div>' + ic('book', 22) + ' Materi & modul PDF dari pengajar</div><div>' + ic('quiz', 22) + ' Latihan soal dengan nilai otomatis</div><div>' + ic('clipcheck', 22) + ' Pantau kehadiran, jadwal, dan tagihan</div></div>' +
+          '<div class="stage px" style="--d:10">' +
+            '<div class="orbit o2">' + node('n1', ic('book', 16)) + node('n2', ic('trophy', 16)) + node('n3', '<b>π</b>') + node('n4', ic('quiz', 16)) + '</div>' +
+            '<div class="orbit o1">' + node('n1', ic('star', 14)) + node('n3', '<b>x²</b>') + '</div>' +
+            '<div class="logo-tile">' + (app.logo_url ? UI.logoHtml(app, 'mono') : '<span class="mono">' + esc(UI.fmt.inisial(app.nama_app).slice(0, 1)) + '<b>' + esc(UI.fmt.inisial(app.nama_app).slice(1, 2)) + '</b></span>') +
+              '<span class="cap">' + ic('cap', 18) + '</span></div>' +
+            '<div class="fc-wrap fa px" style="--d:26" aria-hidden="true"><div class="fc"><span class="fc-ic g">' + ic('trend', 18) + '</span><div><small>Nilai latihan</small><b>92 <em>+8</em></b></div>' +
+              '<span class="fc-bars"><i style="--h:40%"></i><i style="--h:62%"></i><i style="--h:50%"></i><i style="--h:78%"></i><i style="--h:92%"></i></span></div></div>' +
+            '<div class="fc-wrap fb px" style="--d:-22" aria-hidden="true"><div class="fc"><svg class="fc-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15"/><circle class="v" cx="18" cy="18" r="15" pathLength="100"/></svg><div><small>Kehadiran</small><b>8/8 sesi</b></div></div></div>' +
+          '</div>' +
+          '<h1 class="kilap">' + kata + '</h1>' +
+          '<p class="typer" aria-hidden="true"><span id="lType"></span><i class="caret"></i></p><p class="sr-only">' + esc(app.tagline || '') + '</p>' +
+          '<div class="login-points"><div style="--d:700ms">' + ic('book', 22) + ' Materi & modul PDF dari pengajar</div><div style="--d:820ms">' + ic('quiz', 22) + ' Latihan soal dengan nilai otomatis</div><div style="--d:940ms">' + ic('clipcheck', 22) + ' Pantau kehadiran, jadwal, dan tagihan</div></div>' +
         '</section>' +
-        '<section class="login-card"><div class="login-inner"><div class="grab"></div>' +
-          '<div class="segmented blue" role="tablist" aria-label="Pilih jenis akun">' +
+        '<div class="login-side">' + LoginFX.owlSvg() +
+        '<section class="login-card"><div class="login-inner">' +
+          '<div class="segmented blue seg-slide" role="tablist" aria-label="Pilih jenis akun"><span class="seg-ind"></span>' +
             '<button type="button" role="tab" data-peran="siswa">' + ic('user', 18) + ' Siswa</button>' +
             '<button type="button" role="tab" data-peran="guru">' + ic('idcard', 18) + ' Guru / Pengelola</button>' +
           '</div>' +
-          '<h2 id="lJudul"></h2><p class="lead">Gunakan akun yang sudah diverifikasi oleh pengelola bimbel.</p>' +
+          '<div class="l-head"><span class="sapa">' + ic('sparkle', 14) + ' ' + sapa + '!</span><h2 id="lJudul"></h2><p class="lead">Gunakan akun yang sudah diverifikasi oleh pengelola bimbel.</p></div>' +
           '<form id="fLogin" class="stack" novalidate>' +
             '<div class="field"><label for="lUser" id="lUserLbl"></label><div class="input-wrap" id="lUserWrap"></div></div>' +
             '<div class="field"><label for="lPass">Kata Sandi</label><div class="input-wrap">' + ic('lock', 20) +
               '<input class="input" type="password" id="lPass" autocomplete="current-password" placeholder="Masukkan kata sandi" required>' +
-              '<button type="button" class="icon-btn light trail" data-mata="lPass" aria-label="Tampilkan kata sandi">' + ic('eye', 20) + '</button></div></div>' +
+              '<button type="button" class="icon-btn light trail" data-mata="lPass" aria-label="Tampilkan kata sandi">' + ic('eye', 20) + '</button></div>' +
+              '<span class="caps hidden" id="lCaps" role="status">' + ic('alert', 14) + ' Caps Lock sedang aktif</span></div>' +
             '<div class="row between"><label class="check"><input type="checkbox" id="lIngat"> Ingat Sesi Saya</label>' +
               '<button type="button" class="btn btn-ghost btn-sm" id="lLupa">Lupa kata sandi?</button></div>' +
             '<p class="err hidden" id="lErr" role="alert"></p>' +
-            '<button class="btn btn-primary btn-block btn-lg" type="submit" id="lBtn">Masuk Sekarang ' + ic('right', 20) + '</button>' +
+            '<button class="btn btn-primary btn-block btn-lg btn-login" type="submit" id="lBtn"><span class="lbl">Masuk Sekarang ' + ic('right', 20) + '</span></button>' +
           '</form>' +
-          '<div class="login-help"><p class="small muted">Belum memiliki akun bimbingan?</p><button class="btn btn-ghost" id="lAktivasi">' + ic('headset', 18) + ' Hubungi Admin Bimbel untuk Aktivasi</button></div>' +
+          '<div class="login-help"><span>Belum memiliki akun bimbingan?</span><button class="btn btn-ghost btn-sm" id="lAktivasi">' + ic('headset', 16) + ' Hubungi Admin</button></div>' +
           '<p class="login-foot">' + ic('shield', 16) + ' Data tersimpan di Google Workspace milik ' + esc(app.nama_app) + '</p>' +
-        '</div></section>' +
+        '</div></section></div>' +
       '</main>';
     const root = document.getElementById('app');
     pasangMata(root);
-    const setPeran = (p) => {
+    const fx = LoginFX.pasang(root, { kalimat: [app.tagline || 'Bimbingan Belajar Digital', 'Materi & modul bisa dibuka kapan saja.', 'Latihan soal dengan nilai otomatis.', 'Pantau jadwal, kehadiran, dan tagihan.'] });
+    const polaUser = (p, v) => p === 'siswa' ? /^[A-Za-z0-9._-]{4,}$/.test(v) : /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+    const cekUser = () => { const u = root.querySelector('#lUser'); root.querySelector('#lUserWrap').classList.toggle('valid', polaUser(peranLogin, u.value.trim())); };
+    const setPeran = (p, awal) => {
       peranLogin = p;
       root.querySelectorAll('[data-peran]').forEach((b) => { const on = b.dataset.peran === p; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
+      root.querySelector('.seg-slide').style.setProperty('--i', p === 'siswa' ? 0 : 1);
       root.querySelector('#lJudul').textContent = p === 'siswa' ? 'Masuk ke Akun Siswa' : 'Masuk sebagai Guru';
       root.querySelector('#lUserLbl').textContent = p === 'siswa' ? 'ID Siswa Bimbel' : 'Email Guru';
       const lama = root.querySelector('#lUser'), nilai = lama ? lama.value : '';
       root.querySelector('#lUserWrap').innerHTML = ic(p === 'siswa' ? 'idcard' : 'mail', 20) +
-        '<input class="input" id="lUser" ' + (p === 'siswa' ? 'autocapitalize="characters" autocomplete="username" placeholder="Contoh: SC26001"' : 'type="email" autocomplete="username" inputmode="email" placeholder="nama@email.com"') + ' required>';
-      root.querySelector('#lUser').value = nilai;
+        '<input class="input" id="lUser" ' + (p === 'siswa' ? 'autocapitalize="characters" autocomplete="username" placeholder="Contoh: SC26001"' : 'type="email" autocomplete="username" inputmode="email" placeholder="nama@email.com"') + ' required>' +
+        '<span class="ok-mark" aria-hidden="true">' + ic('check', 14) + '</span>';
+      root.querySelector('#lUser').value = nilai; cekUser();
+      root.querySelector('#lUser').addEventListener('input', cekUser);
       root.querySelector('#lErr').classList.add('hidden');
+      if (!awal) { const h = root.querySelector('.l-head'); h.classList.remove('ganti'); void h.offsetWidth; h.classList.add('ganti'); }
+      fx.peran(p);
       if (p === 'guru') API.warmUp('guru');
     };
     root.querySelectorAll('[data-peran]').forEach((b) => b.addEventListener('click', () => setPeran(b.dataset.peran)));
-    setPeran(peranLogin);
+    setPeran(peranLogin, true);
+    const caps = (e) => { if (e.getModifierState) root.querySelector('#lCaps').classList.toggle('hidden', !e.getModifierState('CapsLock')); };
+    root.querySelector('#lPass').addEventListener('keydown', caps);
+    root.querySelector('#lPass').addEventListener('keyup', caps);
+    root.querySelector('#lPass').addEventListener('blur', () => root.querySelector('#lCaps').classList.add('hidden'));
     if (simpanan) {
-      root.querySelector('#lUser').value = simpanan.u; root.querySelector('#lPass').value = simpanan.p; root.querySelector('#lIngat').checked = simpanan.i;
+      root.querySelector('#lUser').value = simpanan.u; root.querySelector('#lPass').value = simpanan.p; root.querySelector('#lIngat').checked = simpanan.i; cekUser();
       if (simpanan.fokus && root.querySelector('#' + simpanan.fokus)) root.querySelector('#' + simpanan.fokus).focus();
     }
     const bantuan = () => UI.buka(UI.headHtml('Butuh bantuan akun?') + '<div class="modal-body stack"><p class="muted">Akun dan kata sandi dibuat oleh pengelola bimbel. Untuk aktivasi akun baru atau reset kata sandi, hubungi pengelola:</p>' +
@@ -188,12 +216,17 @@
       const user = root.querySelector('#lUser').value.trim(), pass = root.querySelector('#lPass').value;
       const err = root.querySelector('#lErr'), btn = root.querySelector('#lBtn');
       const tampil = (t) => { err.innerHTML = ic('alert', 16) + ' ' + esc(t); err.className = 'err'; };
-      if (!user || !pass) { tampil(peranLogin === 'siswa' ? 'Isi ID Siswa dan kata sandi.' : 'Isi email dan kata sandi.'); (user ? root.querySelector('#lPass') : root.querySelector('#lUser')).focus(); return; }
-      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Memeriksa…';
+      if (!user || !pass) { tampil(peranLogin === 'siswa' ? 'Isi ID Siswa dan kata sandi.' : 'Isi email dan kata sandi.'); fx.gagal(); (user ? root.querySelector('#lPass') : root.querySelector('#lUser')).focus(); return; }
+      btn.disabled = true; btn.innerHTML = '<span class="lbl"><span class="spinner"></span> Memeriksa…</span>';
       const ingat = root.querySelector('#lIngat').checked;
       const r = await API.api('auth.login', { peran: peranLogin, username: user, password: pass, ingat });
-      btn.disabled = false; btn.innerHTML = 'Masuk Sekarang ' + ic('right', 20);
-      if (!r.success) { tampil(r.message); root.querySelector('#lPass').select(); return; }
+      if (!r.success) {
+        btn.disabled = false; btn.innerHTML = '<span class="lbl">Masuk Sekarang ' + ic('right', 20) + '</span>';
+        tampil(r.message); fx.gagal(); root.querySelector('#lPass').select(); return;
+      }
+      btn.classList.add('ok'); btn.innerHTML = '<span class="lbl">' + ic('checkCircle', 20) + ' Berhasil! Mengalihkan…</span>';
+      err.className = 'err hidden'; fx.sukses();
+      await new Promise((ok) => setTimeout(ok, fx.jeda()));
       API.Sesi.simpan(r.data.token, r.data.me, ingat);
       App._sudahMinta = false;
       location.hash = r.data.me.peran === 'siswa' ? '#/siswa/beranda' : '#/guru/dashboard';

@@ -500,7 +500,7 @@
   // ================================================================
   let mCari = '', mMapel = '';
   function materi() {
-    main.innerHTML = butuhMaster() + '<div class="split"><section class="card panel" id="mForm"></section><section id="mDaftar">' + UI.skeleton([52, 90, 90, 90]) + '</section></div>';
+    main.innerHTML = butuhMaster() + '<div class="split split-form"><section class="card panel up-card" id="mForm"></section><section id="mDaftar">' + UI.skeleton([52, 90, 90, 90]) + '</section></div>';
     formUnggah(main.querySelector('#mForm'));
     API.muat('materi.list', {}, (d, c, err) => {
       if (halaman !== 'materi') return;
@@ -511,24 +511,40 @@
   }
   function formUnggah(box) {
     let berkas = null;
-    box.innerHTML = '<div class="panel-h"><div><h2>' + ic('upload', 20) + ' Unggah Materi</h2><p>Tersimpan di Google Drive bimbel</p></div></div><form class="stack" id="fU" novalidate>' +
+    box.innerHTML = '<div class="panel-h"><div><h2>' + ic('upload', 20) + ' Unggah Materi</h2><p>Tersimpan otomatis di Google Drive bimbel</p></div></div><form id="fU" novalidate>' +
+      '<p class="up-step"><i>1</i> Pilih berkas</p>' +
+      '<label class="drop" id="uDrop" tabindex="0" for="uFile"><span class="drop-ic">' + ic('upload', 26) + '</span>' +
+        '<b>Seret berkas ke sini, atau <u>pilih dari komputer</u></b><span>Maksimal 10 MB per berkas</span>' +
+        '<span class="types"><i>PDF</i><i>DOCX</i><i>PPTX</i><i>XLSX</i><i>JPG/PNG</i></span></label>' +
+      '<input type="file" id="uFile" class="sr-only" tabindex="-1" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png">' +
+      '<div class="file-chip hidden" id="uChip"><span class="ft" id="uExt">PDF</span><div class="grow"><b id="uNama"></b><span id="uInfo"></span></div>' +
+        '<button type="button" class="btn btn-ghost btn-icon btn-sm" id="uGanti" aria-label="Ganti berkas" title="Ganti berkas">' + ic('refresh', 18) + '</button>' +
+        '<button type="button" class="btn btn-ghost btn-icon btn-sm" id="uBatal" aria-label="Batalkan berkas" title="Batalkan berkas" style="color:var(--danger)">' + ic('x', 18) + '</button></div>' +
+      '<p class="up-step"><i>2</i> Lengkapi keterangan</p>' +
+      '<div class="stack">' +
       fld('uJudul', 'Judul materi *', inp('uJudul', '', 'placeholder="Rumus Cepat Identitas Trigonometri"')) +
-      '<div class="grid-2">' + fld('uMapel', 'Mata pelajaran *', sel('uMapel', opsiMapel(mMapel || ''))) + fld('uKelas', 'Untuk kelas *', sel('uKelas', opsiKelas('', true))) + '</div>' +
-      '<div class="grid-2">' + fld('uBab', 'Bab', inp('uBab', '', 'placeholder="Bab 3"')) + fld('uTag', 'Label', sel('uTag', ['', 'Wajib', 'Rangkuman', 'Pengayaan', 'Intensif UTBK'].map((t) => '<option value="' + t + '">' + (t || '—') + '</option>').join(''))) + '</div>' +
-      fld('uDesk', 'Deskripsi singkat', '<textarea class="textarea" id="uDesk" rows="2" placeholder="Ringkasan isi modul"></textarea>') +
-      '<label class="drop" id="uDrop" tabindex="0">' + ic('upload', 32) + '<b id="uNama">Seret berkas ke sini atau klik untuk memilih</b><span id="uInfo">PDF, Word, PowerPoint, atau gambar • maks. 10 MB</span>' +
-      '<input type="file" id="uFile" class="sr-only" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png"></label>' +
-      '<div class="prog hidden" id="uProg"><i></i></div>' +
-      '<button class="btn btn-primary btn-block" type="submit" id="uBtn"' + (M.kelas.length && M.mapel.length ? '' : ' disabled') + '>' + ic('upload', 18) + ' Unggah Materi</button></form>';
-    const drop = box.querySelector('#uDrop'), file = box.querySelector('#uFile');
+      '<div class="grid-2 sm-1">' + fld('uMapel', 'Mata pelajaran *', sel('uMapel', opsiMapel(mMapel || ''))) + fld('uKelas', 'Untuk kelas *', sel('uKelas', opsiKelas('', true))) + '</div>' +
+      '<div class="grid-2 sm-1">' + fld('uBab', 'Bab', inp('uBab', '', 'placeholder="Bab 3"')) + fld('uTag', 'Label', sel('uTag', ['', 'Wajib', 'Rangkuman', 'Pengayaan', 'Intensif UTBK'].map((t) => '<option value="' + t + '">' + (t || 'Tanpa label') + '</option>').join(''))) + '</div>' +
+      fld('uDesk', 'Deskripsi singkat', '<textarea class="textarea" id="uDesk" rows="3" placeholder="Ringkasan isi modul (opsional)"></textarea>') +
+      '<div class="prog-wrap hidden" id="uProg"><div class="row between"><span>Mengunggah ke Google Drive…</span><b id="uPct">0%</b></div><div class="prog"><i></i></div></div>' +
+      '<button class="btn btn-primary btn-block btn-lg" type="submit" id="uBtn"' + (M.kelas.length && M.mapel.length ? '' : ' disabled') + '>' + ic('upload', 18) + ' Unggah Materi</button></div></form>';
+    const drop = box.querySelector('#uDrop'), file = box.querySelector('#uFile'), chip = box.querySelector('#uChip');
+    const JENIS = { pdf: ['PDF', 'pdf'], doc: ['DOC', 'doc'], docx: ['DOCX', 'doc'], ppt: ['PPT', 'ppt'], pptx: ['PPTX', 'ppt'], xls: ['XLS', 'xls'], xlsx: ['XLSX', 'xls'], jpg: ['JPG', 'img'], jpeg: ['JPG', 'img'], png: ['PNG', 'img'] };
     const pilih = (f) => {
       if (!f) return;
+      const ext = (f.name.split('.').pop() || '').toLowerCase();
+      if (!JENIS[ext]) { toast('Jenis berkas belum didukung. Gunakan PDF, Word, PowerPoint, Excel, atau gambar.', 'error'); return; }
       if (f.size > 10 * 1024 * 1024) { toast('Ukuran berkas melebihi 10 MB. Kompres atau pecah modul terlebih dahulu.', 'error'); return; }
       berkas = f;
+      const ft = box.querySelector('#uExt'); ft.textContent = JENIS[ext][0]; ft.className = 'ft ft-' + JENIS[ext][1];
       box.querySelector('#uNama').textContent = f.name; box.querySelector('#uInfo').textContent = fmt.ukuran(f.size) + ' • siap diunggah';
+      drop.classList.add('hidden'); chip.classList.remove('hidden'); chip.classList.remove('masuk'); void chip.offsetWidth; chip.classList.add('masuk');
       if (!box.querySelector('#uJudul').value) box.querySelector('#uJudul').value = f.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
     };
+    const batal = () => { berkas = null; file.value = ''; chip.classList.add('hidden'); drop.classList.remove('hidden'); };
     file.addEventListener('change', () => pilih(file.files[0]));
+    box.querySelector('#uGanti').addEventListener('click', () => file.click());
+    box.querySelector('#uBatal').addEventListener('click', batal);
     drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); file.click(); } });
     ['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
     ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
@@ -540,12 +556,13 @@
       if (!berkas) return toast('Pilih berkas materi terlebih dahulu.', 'error');
       const btn = box.querySelector('#uBtn'); tombolSibuk(btn, true, 'Mengunggah…');
       const prog = box.querySelector('#uProg'); prog.classList.remove('hidden');
-      const bar = prog.querySelector('i'); bar.style.width = '15%';
-      let p = 15; const t = setInterval(() => { p = Math.min(90, p + 5); bar.style.width = p + '%'; }, 400);
+      const bar = prog.querySelector('.prog i'), pct = box.querySelector('#uPct');
+      const setP = (n) => { bar.style.width = n + '%'; pct.textContent = n + '%'; };
+      let p = 15; setP(p); const t = setInterval(() => { p = Math.min(90, p + 5); setP(p); }, 400);
       try {
         const b64 = await UI.bacaFileBase64(berkas);
         const r = await API.tulis('materi.unggah', { materi: { judul: v('uJudul'), mapelId: v('uMapel'), kelasId: v('uKelas'), bab: v('uBab'), tag: v('uTag'), deskripsi: v('uDesk') }, file: { nama: berkas.name, mime: berkas.type || 'application/octet-stream', base64: b64 } }, { timeout: 240000 });
-        clearInterval(t); bar.style.width = '100%';
+        clearInterval(t); setP(100);
         if (!r.success) { toast(r.message, 'error'); return; }
         toast(r.message, 'success');
         if (r.data.peringatan) toast(r.data.peringatan, 'warning');
