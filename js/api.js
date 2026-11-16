@@ -7,7 +7,20 @@
   'use strict';
   const CFG = window.APP_CONFIG || {};
   const URL_API = CFG.GAS_URL || '';
-  const konfigValid = () => !!URL_API && !/GANTI|XXXX/.test(URL_API);
+  // Versi demo: halaman disajikan oleh GAS (HtmlService) → panggil server lewat google.script.run
+  const viaGas = !!(window.google && google.script && google.script.run);
+  const konfigValid = () => viaGas || (!!URL_API && !/GANTI|XXXX/.test(URL_API));
+  function lewatGas(body, ms) {
+    return new Promise((selesai) => {
+      let beres = false;
+      const akhir = (teks) => { if (beres) return; beres = true; clearTimeout(t); selesai(teks); };
+      const t = setTimeout(() => akhir(JSON.stringify({ success: false, code: 'NET', message: 'Server terlalu lama merespons. Coba lagi.' })), ms);
+      google.script.run
+        .withSuccessHandler((teks) => akhir(teks))
+        .withFailureHandler(() => akhir(JSON.stringify({ success: false, code: 'NET', message: 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.' })))
+        .apiRun(body);
+    });
+  }
 
   // ---------- Sesi (token dikirim di BODY POST, bukan query string) ----------
   const KS = 'sc_sesi';
@@ -53,14 +66,19 @@
     const t0 = performance.now();
     let res;
     try {
-      const ctrl = new AbortController(), batas = setTimeout(() => ctrl.abort(), (opt && opt.timeout) || 60000);
-      const r = await fetch(URL_API, {
-        method: 'POST', redirect: 'follow', signal: ctrl.signal,
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },        // WAJIB text/plain → tanpa preflight CORS
-        body: JSON.stringify({ action, token: Sesi.token(), data: data || {} })
-      });
-      clearTimeout(batas);
-      const teks = await r.text();
+      const body = JSON.stringify({ action, token: Sesi.token(), data: data || {} }), ms = (opt && opt.timeout) || 60000;
+      let teks;
+      if (viaGas) teks = await lewatGas(body, ms);
+      else {
+        const ctrl = new AbortController(), batas = setTimeout(() => ctrl.abort(), ms);
+        const r = await fetch(URL_API, {
+          method: 'POST', redirect: 'follow', signal: ctrl.signal,
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },      // WAJIB text/plain → tanpa preflight CORS
+          body
+        });
+        clearTimeout(batas);
+        teks = await r.text();
+      }
       try { res = JSON.parse(teks); }
       catch (e) { res = { success: false, code: 'NET', message: /<html/i.test(teks) ? 'Server belum siap. Pastikan Web App sudah di-deploy dengan akses "Anyone".' : 'Respons server tidak valid.' }; }
     } catch (e) {
@@ -161,8 +179,9 @@
       if (Date.now() - t < 240000) return;
       sessionStorage.setItem(k, String(Date.now()));
     } catch (e) { /* */ }
+    if (viaGas) { try { google.script.run.withFailureHandler(() => {}).apiWarm(scope); } catch (e) { /* */ } return; }
     fetch(URL_API + (URL_API.indexOf('?') > -1 ? '&' : '?') + 'w=' + scope, { mode: 'no-cors' }).catch(() => {});
   }
 
-  window.API = { api, apiQ, muat, tulis, Sesi, Cache, warmUp, konfigValid, setOnAuthHilang: (fn) => { onAuthHilang = fn; } };
+  window.API = { api, apiQ, muat, tulis, Sesi, Cache, warmUp, konfigValid, viaGas, setOnAuthHilang: (fn) => { onAuthHilang = fn; } };
 })();

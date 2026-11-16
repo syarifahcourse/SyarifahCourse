@@ -488,14 +488,29 @@
           if (lalu.length) html += '<p class="day-h" style="margin-top:28px">' + ic('history', 16) + ' Riwayat 2 minggu terakhir</p>' + lalu.map((j, i) => kartuJadwal(j, false, i)).join('');
           isi.innerHTML = html;
         } else {
-          isi.innerHTML = d.tagihan.length ? '<div style="margin-top:16px">' + d.tagihan.map((t, i) => {
-            const lewat = t.status !== 'Lunas' && t.jatuhTempo && t.jatuhTempo < d.hariIni;
-            return '<article class="card ncard" style="--i:' + i + '"><div class="row between"><span class="tag pill-blue">' + esc(t.periode) + '</span><span class="pill ' + (t.status === 'Lunas' ? 'pill-green' : lewat ? 'pill-red' : 'pill-amber') + '">' + ic(t.status === 'Lunas' ? 'checkCircle' : 'clock', 14) + ' ' + (t.status === 'Lunas' ? 'Lunas' : lewat ? 'Lewat Jatuh Tempo' : 'Belum Bayar') + '</span></div>' +
-              '<p class="num" style="font-size:26px;font-weight:700;margin-top:10px">' + fmt.rp(t.jumlah) + '</p>' +
-              '<div class="meta">' + (t.jatuhTempo ? '<span>' + ic('calendar', 14) + ' Jatuh tempo ' + esc(fmt.tgl(t.jatuhTempo)) + '</span>' : '') + (t.tglBayar ? '<span>' + ic('checkCircle', 14) + ' Dibayar ' + esc(fmt.tgl(t.tglBayar)) + '</span>' : '') + '</div>' +
+          const mIni = d.mingguIni || fmt.senin(d.hariIni);
+          const lewatT = (t) => t.status !== 'Lunas' && t.jatuhTempo && t.jatuhTempo < d.hariIni;
+          const jumlah = (arr) => arr.reduce((a, t) => a + t.jumlah, 0);
+          const kartu = (t, i) => {
+            const lewat = lewatT(t);
+            return '<article class="card ncard" style="--i:' + i + '"><div class="row between"><span class="tag pill-blue">' + esc(t.minggu ? fmt.labelMinggu(t.minggu) : t.periode) + '</span><span class="pill ' + (t.status === 'Lunas' ? 'pill-green' : lewat ? 'pill-red' : 'pill-amber') + '">' + ic(t.status === 'Lunas' ? 'checkCircle' : 'clock', 14) + ' ' + (t.status === 'Lunas' ? 'Lunas' : lewat ? 'Menunggak' : 'Belum Bayar') + '</span></div>' +
+              '<p class="num" style="font-size:24px;font-weight:700;margin-top:10px">' + fmt.rp(t.jumlah) + '</p>' +
+              '<div class="meta">' + (t.jatuhTempo ? '<span>' + ic('calendar', 14) + ' Jatuh tempo ' + esc(fmt.tgl(t.jatuhTempo, { hari: true })) + '</span>' : '') + (t.tglBayar ? '<span>' + ic('checkCircle', 14) + ' Dibayar ' + esc(fmt.tgl(t.tglBayar)) + '</span>' : '') + '</div>' +
               (t.catatan ? '<p class="small muted" style="margin-top:8px">' + esc(t.catatan) + '</p>' : '') + '</article>';
-          }).join('') + '<div class="info-box" style="margin-top:16px">' + ic('info', 20) + '<span>Status lunas diperbarui oleh pengelola bimbel setelah pembayaran diterima.</span></div></div>'
-            : '<div class="card" style="margin-top:16px">' + UI.kosong('wallet', 'Tidak ada tagihan', 'Tagihan les akan tampil di sini.') + '</div>';
+          };
+          if (!d.tagihan.length) { isi.innerHTML = '<div class="card" style="margin-top:16px">' + UI.kosong('wallet', 'Tidak ada tagihan', 'Tagihan les mingguan akan tampil di sini.') + '</div>'; return; }
+          const tunggak = d.tagihan.filter(lewatT), ini = d.tagihan.filter((t) => t.minggu === mIni);
+          const belum = d.tagihan.filter((t) => t.status !== 'Lunas').sort((a, b) => ((a.jatuhTempo || '') < (b.jatuhTempo || '') ? -1 : 1));
+          const lunas = d.tagihan.filter((t) => t.status === 'Lunas');
+          const iniLunas = ini.length && ini.every((t) => t.status === 'Lunas');
+          let html = '<div class="tg-sum">' +
+            (tunggak.length ? '<div class="tg-alert" role="status">' + ic('alert', 24) + '<div><b>Tunggakan ' + tunggak.length + ' minggu • ' + fmt.rp(jumlah(tunggak)) + '</b><span>Mohon segera dilunasi ke pengelola bimbel.</span></div></div>' : '') +
+            (ini.length ? '<div class="tg-ini"><small>Tagihan minggu ini • ' + esc(fmt.rentangMinggu(mIni)) + '</small><div class="v">' + fmt.rp(jumlah(ini)) + '</div><div class="row between">' +
+              '<span>' + (iniLunas ? ic('checkCircle', 14) + ' Sudah lunas, terima kasih!' : ic('calendar', 14) + ' Bayar paling lambat ' + esc(fmt.tgl(ini[0].jatuhTempo, { hari: true, tahun: false }))) + '</span>' +
+              '<span class="pill ' + (iniLunas ? 'pill-green' : 'pill-amber') + '">' + (iniLunas ? 'Lunas' : 'Belum bayar') + '</span></div></div>' : '') + '</div>';
+          if (belum.length) html += '<p class="tg-h">' + ic('clock', 16) + ' Belum dibayar (' + belum.length + ')</p>' + belum.map(kartu).join('');
+          if (lunas.length) html += '<p class="tg-h">' + ic('checkCircle', 16) + ' Riwayat lunas</p>' + lunas.slice(0, 12).map((t, i) => kartu(t, i + belum.length)).join('');
+          isi.innerHTML = html + '<div class="info-box" style="margin-top:16px">' + ic('info', 20) + '<span>Tagihan les dibuat <b>setiap minggu</b> (Senin–Minggu). Status lunas diperbarui oleh pengelola bimbel setelah pembayaran diterima.</span></div>';
         }
       };
       gambar();

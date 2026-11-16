@@ -34,7 +34,7 @@
       root.querySelector('#gCari').addEventListener('keydown', (e) => { if (e.key === 'Enter') { cariSiswa = e.target.value.trim(); hal_siswa_tab = 'siswa'; if (halaman === 'siswa') siswa(); else location.hash = '#/guru/siswa'; } });
     }
     const side = root.querySelector('#side');
-    side.innerHTML = '<div class="brand"><div class="logo">' + UI.logoHtml(app) + '</div><div class="grow"><h1>' + esc(app.nama_app) + '</h1><p>Portal Bimbel Terpadu</p></div></div>' +
+    side.innerHTML = '<div class="brand"><div class="logo">' + UI.logoHtml(app) + '</div><div class="grow"><h1>' + esc(app.nama_app) + '</h1><p>' + (app.demo || App.pengaturan().demo ? '<span class="demo-tag">Demo</span> Portal Bimbel' : 'Portal Bimbel Terpadu') + '</p></div></div>' +
       NAV.map((g) => '<p class="grp">' + g[0] + '</p>' + g[1].map((n) => '<a class="nav-i' + (n[0] === hal ? ' on' : '') + '" href="#/guru/' + n[0] + '"' + (n[0] === hal ? ' aria-current="page"' : '') + '>' + ic(n[1], 20) + '<span>' + n[2] + '</span>' + hitungNav(n[0]) + '</a>').join('')).join('') +
       '<div class="me"><span class="av">' + esc(fmt.inisial(me.nama)) + '</span><div class="grow" style="min-width:0"><b class="ellipsis">' + esc(me.nama) + '</b><span>' + esc({ admin: 'Admin', guru: 'Guru / Tutor', superadmin: 'Akses Darurat' }[me.peran] || '') + '</span></div>' +
       '<button class="icon-btn" id="gKeluar" aria-label="Keluar" title="Keluar">' + ic('logout', 20) + '</button></div>';
@@ -116,7 +116,7 @@
       main.innerHTML =
         '<div class="row between wrap" style="margin-bottom:18px"><p class="muted row">' + ic('calendar', 18) + esc(fmt.tglPanjang(d.hariIni)) + (M.app.tahun_ajaran ? ' • T.A. ' + esc(M.app.tahun_ajaran) : '') + '</p>' +
           '<div class="row"><a class="btn btn-outline btn-sm" href="#/guru/jadwal">' + ic('plus', 16) + ' Jadwal</a><a class="btn btn-primary btn-sm" href="#/guru/presensi">' + ic('clipcheck', 16) + ' Catat Presensi</a></div></div>' +
-        (k.tagihanLewat ? '<div class="warn-box" style="margin-bottom:16px">' + ic('alert', 18) + '<span>' + k.tagihanLewat + ' tagihan sudah lewat jatuh tempo. <a href="#/guru/jadwal/tagihan">Lihat tagihan</a></span></div>' : '') +
+        (k.tagihanLewat ? '<div class="warn-box" style="margin-bottom:16px">' + ic('alert', 18) + '<span>' + k.tagihanLewat + ' tagihan mingguan sudah lewat jatuh tempo. <a href="#/guru/jadwal/tagihan">Lihat tunggakan</a></span></div>' : '') +
         '<div class="kpis enter">' +
           kpi(0, 'TOTAL SISWA AKTIF', 'users', '<span data-count="' + k.siswaAktif + '">0</span>' + (k.target ? '<small> / ' + k.target + '</small>' : ''), (k.target ? UI.bar(Math.min(100, k.siswaAktif / k.target * 100), 'blue') + '<div style="height:8px"></div>' : '') + '<span class="pill pill-green">+' + k.baruBulanIni + '</span> siswa baru bulan ini') +
           kpi(1, 'KEHADIRAN HARI INI', 'clipcheck', k.hadirPersen === null ? '–' : '<span data-count="' + k.hadirPersen + '" data-dec="1">0</span><small>%</small>', k.tercatat ? k.hadir + ' hadir dari ' + k.tercatat + ' • <span class="pill pill-amber">' + k.izin + ' izin</span><span class="pill pill-red">' + k.alfa + ' alfa</span>' : 'Belum ada presensi tercatat hari ini') +
@@ -128,7 +128,7 @@
             '<div class="chart" id="chHadir"></div><div id="chHadirT" class="hidden"></div></section>' +
           '<section class="card panel"><div class="panel-h"><h2>' + ic('zap', 20) + ' Aksi Cepat</h2></div><div class="quick">' +
             qa('presensi', 'clipcheck', 'Catat Presensi', 'Checklist siswa per sesi') + qa('materi', 'upload', 'Unggah Modul', 'PDF ke Google Drive') +
-            qa('latihan/baru', 'quiz', 'Buat Latihan', 'Soal pilihan ganda') + qa('jadwal/tagihan', 'wallet', 'Buat Tagihan', 'Per siswa atau massal') + '</div></section>' +
+            qa('latihan/baru', 'quiz', 'Buat Latihan', 'Soal pilihan ganda') + qa('jadwal/tagihan', 'wallet', 'Tagihan Mingguan', 'Per siswa atau satu kelas') + '</div></section>' +
         '</div>' +
         '<div class="g-grid">' +
           '<section class="card panel"><div class="panel-h"><h2>' + ic('clock', 20) + ' Sesi Hari Ini</h2><span class="pill pill-outline">' + d.sesi.length + ' sesi terjadwal</span></div>' +
@@ -201,7 +201,7 @@
       const per = 15; halSiswa = Math.min(halSiswa, Math.max(1, Math.ceil(isi.length / per)));
       const potong = isi.slice((halSiswa - 1) * per, halSiswa * per);
       box.querySelector('#fsTabel').innerHTML = isi.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Siswa</th><th>Kelas</th><th>No. HP</th><th class="num">Kehadiran</th><th class="num">Rata Nilai</th><th>Status</th><th><span class="sr-only">Aksi</span></th></tr></thead><tbody>' +
-        potong.map((s) => '<tr><td><div class="who"><span class="av">' + esc(fmt.inisial(s.nama)) + '</span><div><b>' + esc(s.nama) + '</b><span>' + esc(s.id) + (s.tagihanBelum ? ' • <span style="color:var(--warning)">' + s.tagihanBelum + ' tagihan</span>' : '') + '</span></div></div></td>' +
+        potong.map((s) => '<tr><td><div class="who"><span class="av">' + esc(fmt.inisial(s.nama)) + '</span><div><b>' + esc(s.nama) + '</b><span>' + esc(s.id) + (s.tagihanBelum ? ' • <span style="color:var(--warning)">' + s.tagihanBelum + ' tagihan belum bayar</span>' : '') + '</span></div></div></td>' +
           '<td>' + esc(s.kelas) + '</td><td>' + esc(s.noHp || '–') + '</td><td class="num">' + (s.hadirPersen === null ? '–' : fmt.angka(s.hadirPersen) + '%') + '</td><td class="num">' + (s.rataNilai === null ? '–' : '<b class="num">' + fmt.angka(s.rataNilai) + '</b>') + '</td>' +
           '<td><span class="pill ' + (s.status === 'Aktif' ? 'pill-green' : '') + '">' + esc(s.status) + '</span></td>' +
           '<td><div class="acts"><button class="btn btn-ghost btn-icon btn-sm" data-ed="' + esc(s.id) + '" aria-label="Ubah ' + esc(s.nama) + '" title="Ubah">' + ic('pencil', 18) + '</button>' +
@@ -360,7 +360,7 @@
   // ================================================================
   // JADWAL & TAGIHAN
   // ================================================================
-  let tabJT = 'jadwal', jKelas = '', bStatus = '', bKelas = '', bCari = '';
+  let tabJT = 'jadwal', jKelas = '', bStatus = '', bKelas = '', bCari = '', bMinggu = null, bMode = 'daftar';
   function jadwal(tab) {
     if (tab === 'tagihan') tabJT = 'tagihan';
     main.innerHTML = '<div class="tabs"><button data-tab="jadwal" class="' + (tabJT === 'jadwal' ? 'on' : '') + '">' + ic('calendar', 18) + ' Jadwal Les</button><button data-tab="tagihan" class="' + (tabJT === 'tagihan' ? 'on' : '') + '">' + ic('wallet', 18) + ' Tagihan & Pembayaran</button></div>' + butuhMaster() + '<div id="jtIsi">' + UI.skeleton([52, 380]) + '</div>';
@@ -419,78 +419,182 @@
       d.tutup(); toast(r.message, 'success'); tabJT = 'jadwal'; Guru.route(['jadwal']);
     });
   }
+  // ---------- TAGIHAN MINGGUAN (siklus Senin–Minggu) ----------
+  const HARI_TEMPO = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+  const ingat = { get(k, d) { try { return localStorage.getItem('sc_' + k) || d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('sc_' + k, v); } catch (e) { /* */ } } };
+  const labelT = (t) => (t.minggu ? fmt.labelMinggu(t.minggu) : t.periode);
   function renderTagihan(box, d, siswaList) {
-    const kini = d.hariIni;
-    box.innerHTML = '<div class="filters"><label class="search">' + ic('search', 20, 'muted') + '<input type="search" id="bCari" placeholder="Cari nama siswa atau periode…" value="' + esc(bCari) + '" aria-label="Cari tagihan"></label>' +
-      sel('bKelas', '<option value="">Semua kelas</option>' + opsiKelas(bKelas), 'aria-label="Filter kelas"') +
-      sel('bStatus', [['', 'Semua status'], ['Belum Bayar', 'Belum bayar'], ['Lewat', 'Lewat jatuh tempo'], ['Lunas', 'Lunas']].map((s) => '<option value="' + s[0] + '"' + (s[0] === bStatus ? ' selected' : '') + '>' + s[1] + '</option>').join(''), 'aria-label="Filter status"') +
-      '<button class="btn btn-outline" id="bMassal">' + ic('users', 18) + ' Tagihan Massal</button><button class="btn btn-primary" id="bTambah">' + ic('plus', 18) + ' Tambah Tagihan</button></div><div id="bRingkas" class="row wrap" style="margin-bottom:12px"></div><div id="bTabel"></div>';
+    const kini = d.hariIni, mIni = d.mingguIni || fmt.senin(kini);
+    const daftarMinggu = [...new Set(d.tagihan.map((t) => t.minggu).filter(Boolean))].sort().reverse();
+    if (bMinggu === null) bMinggu = daftarMinggu.indexOf(mIni) > -1 ? mIni : '';
+    const opsiMinggu = '<option value="">Semua minggu</option>' + (daftarMinggu.indexOf(mIni) === -1 ? '<option value="' + mIni + '"' + (bMinggu === mIni ? ' selected' : '') + '>Minggu ini • ' + esc(fmt.rentangMinggu(mIni)) + '</option>' : '') +
+      daftarMinggu.map((m) => '<option value="' + m + '"' + (m === bMinggu ? ' selected' : '') + '>' + (m === mIni ? 'Minggu ini • ' : m === fmt.geser(mIni, -7) ? 'Minggu lalu • ' : m > mIni ? 'Akan datang • ' : '') + esc(fmt.rentangMinggu(m)) + '</option>').join('') +
+      (d.tagihan.some((t) => !t.minggu) ? '<option value="lama"' + (bMinggu === 'lama' ? ' selected' : '') + '>Tagihan lama (bulanan)</option>' : '');
+    box.innerHTML = '<div class="bayar-sum" id="bSum"></div>' +
+      '<div class="row between wrap" style="gap:12px;margin:18px 0 12px"><div class="segmented seg-nowrap" role="tablist" aria-label="Tampilan tagihan">' +
+        '<button data-mode="daftar" class="' + (bMode === 'daftar' ? 'on' : '') + '">' + ic('table', 18) + ' Daftar Tagihan</button>' +
+        '<button data-mode="rekap" class="' + (bMode === 'rekap' ? 'on' : '') + '">' + ic('alert', 18) + ' Rekap Tunggakan</button></div>' +
+        '<div class="row wrap bayar-aksi" style="gap:8px"><button class="btn btn-outline" id="bMassal">' + ic('users', 18) + ' Tagihan Mingguan</button><button class="btn btn-primary" id="bTambah">' + ic('plus', 18) + ' Tambah Tagihan</button></div></div>' +
+      '<div class="filters"><label class="search">' + ic('search', 20, 'muted') + '<input type="search" id="bCari" placeholder="Cari nama siswa…" value="' + esc(bCari) + '" aria-label="Cari tagihan"></label>' +
+        sel('bKelas', '<option value="">Semua kelas</option>' + opsiKelas(bKelas), 'aria-label="Filter kelas"') +
+        '<span id="bFilterDaftar" class="row" style="gap:8px;flex-wrap:wrap">' + sel('bMinggu', opsiMinggu, 'aria-label="Filter minggu"') +
+        sel('bStatus', [['', 'Semua status'], ['Belum Bayar', 'Belum bayar'], ['Lewat', 'Menunggak (lewat tempo)'], ['Lunas', 'Lunas']].map((x) => '<option value="' + x[0] + '"' + (x[0] === bStatus ? ' selected' : '') + '>' + x[1] + '</option>').join(''), 'aria-label="Filter status"') + '</span></div>' +
+      '<div id="bTabel"></div>';
+    const cocok = (t) => (!bKelas || t.kelasId === bKelas) && (!bCari || t.nama.toLowerCase().indexOf(bCari.toLowerCase()) > -1);
+    const ringkas = () => {
+      const semua = d.tagihan.filter((t) => !bKelas || t.kelasId === bKelas);
+      const ini = semua.filter((t) => t.minggu === mIni), lunasIni = ini.filter((t) => t.status === 'Lunas');
+      const tunggak = semua.filter((t) => t.lewat), siswaT = new Set(tunggak.map((t) => t.siswaId)).size;
+      const batas4 = fmt.geser(mIni, -21), masuk4 = semua.filter((t) => t.status === 'Lunas' && t.tglBayar && t.tglBayar >= batas4).reduce((a, t) => a + t.jumlah, 0);
+      const pct = ini.length ? Math.round(lunasIni.length / ini.length * 100) : 0;
+      box.querySelector('#bSum').innerHTML =
+        '<article class="card bs-card"><div class="bs-k">' + ic('calendar', 18) + ' Minggu ini <span>' + esc(fmt.rentangMinggu(mIni, false)) + '</span></div>' +
+          (ini.length ? '<p class="bs-v">' + lunasIni.length + '<small> / ' + ini.length + ' lunas</small></p>' + UI.bar(pct) +
+            '<p class="bs-s">Terkumpul <b>' + fmt.rp(lunasIni.reduce((a, t) => a + t.jumlah, 0)) + '</b> dari ' + fmt.rp(ini.reduce((a, t) => a + t.jumlah, 0)) + '</p>'
+            : '<p class="bs-v" style="font-size:20px">Belum dibuat</p><p class="bs-s"><button class="btn btn-primary btn-sm" id="bBuatIni">' + ic('plus', 16) + ' Buat tagihan minggu ini</button></p>') + '</article>' +
+        '<article class="card bs-card ' + (tunggak.length ? 'merah' : '') + '"><div class="bs-k">' + ic('alert', 18) + ' Tunggakan</div>' +
+          '<p class="bs-v">' + fmt.rp(tunggak.reduce((a, t) => a + t.jumlah, 0)) + '</p><p class="bs-s">' + (tunggak.length ? '<b>' + tunggak.length + ' tagihan</b> dari <b>' + siswaT + ' siswa</b> lewat jatuh tempo' : 'Tidak ada tunggakan 🎉') + '</p>' +
+          (tunggak.length ? '<button class="btn btn-ghost btn-sm" id="bKeRekap" style="padding-left:0">Lihat rekap per siswa ' + ic('right', 16) + '</button>' : '') + '</article>' +
+        '<article class="card bs-card hijau"><div class="bs-k">' + ic('wallet', 18) + ' Terkumpul 4 minggu terakhir</div><p class="bs-v">' + fmt.rp(masuk4) + '</p>' +
+          '<p class="bs-s">Sejak ' + esc(fmt.tgl(batas4, { tahun: false })) + ' • tarif dihitung per minggu</p></article>';
+      UI.animasi(box.querySelector('#bSum'));
+      const bi = box.querySelector('#bBuatIni'); if (bi) bi.addEventListener('click', () => formMassal(siswaList, mIni));
+      const kr = box.querySelector('#bKeRekap'); if (kr) kr.addEventListener('click', () => { bMode = 'rekap'; box.querySelectorAll('[data-mode]').forEach((x) => x.classList.toggle('on', x.dataset.mode === 'rekap')); gambar(); });
+    };
+    const tandaiLunas = async (ids, pesan) => {
+      const pilih = d.tagihan.filter((t) => ids.indexOf(t.id) > -1), lama = pilih.map((t) => Object.assign({}, t));
+      pilih.forEach((t) => { t.status = 'Lunas'; t.tglBayar = kini; t.lewat = false; }); ringkas(); gambar();      // UI optimistis
+      const r = ids.length === 1
+        ? await API.tulis('bayar.simpan', { tagihan: { id: pilih[0].id, siswaId: pilih[0].siswaId, minggu: pilih[0].minggu, periode: pilih[0].periode, jumlah: pilih[0].jumlah, jatuhTempo: pilih[0].jatuhTempo, status: 'Lunas', tglBayar: kini, catatan: pilih[0].catatan } })
+        : await API.tulis('bayar.lunasBanyak', { ids, tglBayar: kini });
+      if (!r.success) { pilih.forEach((t, i) => Object.assign(t, lama[i])); ringkas(); gambar(); return toast(r.message, 'error'); }
+      toast(pesan, 'success');
+    };
     const gambar = () => {
-      const q = bCari.toLowerCase();
-      const isi = d.tagihan.filter((t) => (!bKelas || t.kelasId === bKelas) && (!q || (t.nama + ' ' + t.periode).toLowerCase().indexOf(q) > -1) &&
-        (!bStatus || (bStatus === 'Lewat' ? t.lewat : t.status === bStatus)));
+      box.querySelector('#bFilterDaftar').classList.toggle('hidden', bMode === 'rekap');
+      if (bMode === 'rekap') return gambarRekap();
+      const isi = d.tagihan.filter((t) => cocok(t) && (!bMinggu || (bMinggu === 'lama' ? !t.minggu : t.minggu === bMinggu)) &&
+        (!bStatus || (bStatus === 'Lewat' ? t.lewat : bStatus === 'Belum Bayar' ? t.status !== 'Lunas' : t.status === bStatus)));
       const belum = isi.filter((t) => t.status !== 'Lunas');
-      box.querySelector('#bRingkas').innerHTML = '<span class="pill pill-amber">' + belum.length + ' belum bayar • ' + fmt.rp(belum.reduce((a, t) => a + t.jumlah, 0)) + '</span><span class="pill pill-red">' + isi.filter((t) => t.lewat).length + ' lewat jatuh tempo</span><span class="pill pill-green">' + isi.filter((t) => t.status === 'Lunas').length + ' lunas</span>';
-      box.querySelector('#bTabel').innerHTML = isi.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Siswa</th><th>Periode</th><th class="num">Jumlah</th><th>Jatuh tempo</th><th>Status</th><th></th></tr></thead><tbody>' +
-        isi.map((t) => '<tr><td><div class="who"><span class="av">' + esc(fmt.inisial(t.nama)) + '</span><div><b>' + esc(t.nama) + '</b><span>' + esc(t.kelas) + '</span></div></div></td><td>' + esc(t.periode) + '</td><td class="num"><b class="num">' + fmt.rp(t.jumlah) + '</b></td>' +
-          '<td>' + (t.jatuhTempo ? esc(fmt.tgl(t.jatuhTempo)) : '–') + '</td><td><span class="pill ' + (t.status === 'Lunas' ? 'pill-green' : t.lewat ? 'pill-red' : 'pill-amber') + '">' + (t.status === 'Lunas' ? 'Lunas' + (t.tglBayar ? ' • ' + esc(fmt.tgl(t.tglBayar, { tahun: false })) : '') : t.lewat ? 'Lewat tempo' : 'Belum bayar') + '</span></td>' +
-          '<td><div class="acts">' + (t.status !== 'Lunas' ? '<button class="btn btn-outline btn-sm" data-lunas="' + esc(t.id) + '">' + ic('check', 16) + ' Lunas</button>' : '') +
-          '<button class="btn btn-ghost btn-icon btn-sm" data-ed="' + esc(t.id) + '" aria-label="Ubah tagihan">' + ic('pencil', 18) + '</button><button class="btn btn-ghost btn-icon btn-sm" data-hp="' + esc(t.id) + '" aria-label="Hapus tagihan" style="color:var(--danger)">' + ic('trash', 18) + '</button></div></td></tr>').join('') + '</tbody></table></div>'
-        : '<div class="card">' + UI.kosong('wallet', 'Belum ada tagihan', 'Buat tagihan per siswa atau sekaligus untuk satu kelas.') + '</div>';
-      box.querySelectorAll('[data-lunas]').forEach((b) => b.addEventListener('click', async () => {
-        const t = d.tagihan.find((x) => x.id === b.dataset.lunas), lama = Object.assign({}, t);
-        t.status = 'Lunas'; t.tglBayar = kini; t.lewat = false; gambar();                       // UI optimistis
-        const r = await API.tulis('bayar.simpan', { tagihan: { id: t.id, siswaId: t.siswaId, periode: t.periode, jumlah: t.jumlah, jatuhTempo: t.jatuhTempo, status: 'Lunas', tglBayar: kini, catatan: t.catatan } });
-        if (!r.success) { Object.assign(t, lama); gambar(); return toast(r.message, 'error'); }
-        toast('Tagihan ' + t.nama + ' ditandai lunas.', 'success');
-      }));
-      box.querySelectorAll('[data-ed]').forEach((b) => b.addEventListener('click', () => formTagihan(d.tagihan.find((x) => x.id === b.dataset.ed), siswaList)));
+      box.querySelector('#bTabel').innerHTML = isi.length
+        ? '<div class="row wrap" style="gap:8px;margin-bottom:10px"><span class="pill pill-amber">' + belum.length + ' belum bayar • ' + fmt.rp(belum.reduce((a, t) => a + t.jumlah, 0)) + '</span><span class="pill pill-red">' + isi.filter((t) => t.lewat).length + ' menunggak</span><span class="pill pill-green">' + isi.filter((t) => t.status === 'Lunas').length + ' lunas</span></div>' +
+          '<div class="tbl-wrap"><table class="tbl tbl-bayar"><thead><tr><th>Siswa</th><th>Minggu</th><th class="num">Jumlah</th><th>Jatuh tempo</th><th>Status</th><th></th></tr></thead><tbody>' +
+          isi.map((t) => '<tr><td><div class="who"><span class="av">' + esc(fmt.inisial(t.nama)) + '</span><div><b>' + esc(t.nama) + '</b><span>' + esc(t.kelas) + '</span></div></div></td>' +
+            '<td>' + (t.minggu ? '<b class="nowrap">' + esc(fmt.rentangMinggu(t.minggu, false)) + '</b><span class="sub">' + (t.minggu === mIni ? 'Minggu ini' : t.minggu.slice(0, 4)) + '</span>' : esc(t.periode) + '<span class="sub">Tagihan lama</span>') + '</td>' +
+            '<td class="num"><b class="num">' + fmt.rp(t.jumlah) + '</b></td>' +
+            '<td class="td-tempo">' + (t.jatuhTempo ? '<span class="nowrap"><i class="hp-only">Jatuh tempo </i>' + esc(fmt.tgl(t.jatuhTempo, { hari: true, tahun: false })) + '</span>' : '–') + '</td>' +
+            '<td><span class="pill ' + (t.status === 'Lunas' ? 'pill-green' : t.lewat ? 'pill-red' : 'pill-amber') + '">' + (t.status === 'Lunas' ? 'Lunas' + (t.tglBayar ? ' • ' + esc(fmt.tgl(t.tglBayar, { tahun: false })) : '') : t.lewat ? 'Menunggak' : 'Belum bayar') + '</span></td>' +
+            '<td><div class="acts">' + (t.status !== 'Lunas' ? '<button class="btn btn-outline btn-sm" data-lunas="' + esc(t.id) + '">' + ic('check', 16) + ' Lunas</button>' : '') +
+            '<button class="btn btn-ghost btn-icon btn-sm" data-ed="' + esc(t.id) + '" aria-label="Ubah tagihan">' + ic('pencil', 18) + '</button><button class="btn btn-ghost btn-icon btn-sm" data-hp="' + esc(t.id) + '" aria-label="Hapus tagihan" style="color:var(--danger)">' + ic('trash', 18) + '</button></div></td></tr>').join('') + '</tbody></table></div>'
+        : '<div class="card">' + UI.kosong('wallet', bMinggu && bMinggu !== 'lama' ? 'Belum ada tagihan ' + fmt.labelMinggu(bMinggu).toLowerCase() : 'Tidak ada tagihan', 'Klik "Tagihan Mingguan" untuk membuat tagihan satu kelas sekaligus.') + '</div>';
+      box.querySelectorAll('[data-lunas]').forEach((b) => b.addEventListener('click', () => { const t = d.tagihan.find((x) => x.id === b.dataset.lunas); tandaiLunas([t.id], 'Tagihan ' + t.nama + ' (' + labelT(t) + ') ditandai lunas.'); }));
+      box.querySelectorAll('[data-ed]').forEach((b) => b.addEventListener('click', () => formTagihan(d.tagihan.find((x) => x.id === b.dataset.ed), siswaList, mIni)));
       box.querySelectorAll('[data-hp]').forEach((b) => b.addEventListener('click', async () => {
         if (!await UI.konfirmasi('Hapus tagihan ini?', 'Tindakan ini tidak bisa dibatalkan.', { ok: 'Hapus', bahaya: true })) return;
         const r = await API.tulis('bayar.hapus', { id: b.dataset.hp }); if (!r.success) return toast(r.message, 'error');
-        d.tagihan = d.tagihan.filter((x) => x.id !== b.dataset.hp); toast(r.message, 'success'); gambar();
+        d.tagihan = d.tagihan.filter((x) => x.id !== b.dataset.hp); toast(r.message, 'success'); ringkas(); gambar();
       }));
     };
+    const gambarRekap = () => {
+      const per = {};
+      d.tagihan.filter((t) => t.lewat && cocok(t)).forEach((t) => { (per[t.siswaId] = per[t.siswaId] || { nama: t.nama, kelas: t.kelas, list: [] }).list.push(t); });
+      const rows = Object.keys(per).map((k) => Object.assign(per[k], { id: k, total: per[k].list.reduce((a, t) => a + t.jumlah, 0) })).sort((a, b) => b.list.length - a.list.length || b.total - a.total);
+      box.querySelector('#bTabel').innerHTML = rows.length
+        ? '<div class="info-box" style="margin-bottom:12px">' + ic('info', 18) + '<span>Siswa dengan tagihan mingguan yang <b>sudah lewat jatuh tempo</b>. Klik <b>Lunasi</b> bila orang tua membayar beberapa minggu sekaligus.</span></div>' +
+          '<div class="tbl-wrap"><table class="tbl tbl-bayar tbl-rekap"><thead><tr><th>Siswa</th><th>Minggu yang menunggak</th><th class="num">Lama</th><th class="num">Total</th><th></th></tr></thead><tbody>' +
+          rows.map((r) => {
+            const urut = r.list.slice().sort((a, b) => ((a.minggu || a.jatuhTempo) < (b.minggu || b.jatuhTempo) ? -1 : 1));
+            return '<tr><td><div class="who"><span class="av">' + esc(fmt.inisial(r.nama)) + '</span><div><b>' + esc(r.nama) + '</b><span>' + esc(r.kelas) + '</span></div></div></td>' +
+              '<td><div class="row wrap" style="gap:4px">' + urut.slice(0, 4).map((t) => '<span class="pill pill-red">' + esc(t.minggu ? fmt.rentangMinggu(t.minggu, false) : t.periode) + '</span>').join('') + (urut.length > 4 ? '<span class="pill pill-outline">+' + (urut.length - 4) + '</span>' : '') + '</div></td>' +
+              '<td class="num"><b>' + r.list.length + '</b> minggu</td><td class="num"><b class="num">' + fmt.rp(r.total) + '</b></td>' +
+              '<td><button class="btn btn-primary btn-sm nowrap" data-lunasi="' + esc(r.id) + '">' + ic('checkCircle', 16) + ' Lunasi ' + r.list.length + ' minggu</button></td></tr>';
+          }).join('') + '</tbody></table></div>'
+        : '<div class="card">' + UI.kosong('checkCircle', 'Tidak ada tunggakan', 'Semua tagihan yang sudah jatuh tempo telah dibayar.') + '</div>';
+      box.querySelectorAll('[data-lunasi]').forEach((b) => b.addEventListener('click', async () => {
+        const r = per[b.dataset.lunasi];
+        if (!await UI.konfirmasi('Lunasi ' + r.list.length + ' minggu tunggakan?', r.nama + ' • total ' + fmt.rp(r.total) + '. Semua tagihan yang menunggak akan ditandai lunas hari ini.', { ok: 'Ya, lunasi' })) return;
+        tandaiLunas(r.list.map((t) => t.id), r.list.length + ' minggu tunggakan ' + r.nama + ' ditandai lunas.');
+      }));
+    };
+    box.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { bMode = b.dataset.mode; box.querySelectorAll('[data-mode]').forEach((x) => x.classList.toggle('on', x === b)); gambar(); }));
     box.querySelector('#bCari').addEventListener('input', (e) => { bCari = e.target.value; gambar(); });
-    box.querySelector('#bKelas').addEventListener('change', (e) => { bKelas = e.target.value; gambar(); });
+    box.querySelector('#bKelas').addEventListener('change', (e) => { bKelas = e.target.value; ringkas(); gambar(); });
+    box.querySelector('#bMinggu').addEventListener('change', (e) => { bMinggu = e.target.value; gambar(); });
     box.querySelector('#bStatus').addEventListener('change', (e) => { bStatus = e.target.value; gambar(); });
-    box.querySelector('#bTambah').addEventListener('click', () => formTagihan(null, siswaList));
-    box.querySelector('#bMassal').addEventListener('click', formMassal);
-    gambar();
+    box.querySelector('#bTambah').addEventListener('click', () => formTagihan(null, siswaList, mIni));
+    box.querySelector('#bMassal').addEventListener('click', () => formMassal(siswaList, mIni));
+    ringkas(); gambar();
   }
-  const periodeIni = () => { const d = new Date(); return ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][d.getMonth()] + ' ' + d.getFullYear(); };
-  function formTagihan(t, siswaList) {
-    const baru = !t; t = t || { periode: periodeIni(), status: 'Belum Bayar', jumlah: '' };
+  const infoMinggu = (senin) => senin ? '<b>' + esc(fmt.labelMinggu(senin)) + '</b> (Senin ' + esc(fmt.tgl(senin, { tahun: false })) + ' – Minggu ' + esc(fmt.tgl(fmt.geser(senin, 6), { tahun: false })) + ')' : '';
+  function formTagihan(t, siswaList, mIni) {
+    const baru = !t, lama = t && !t.minggu;
+    const hTempo = +ingat.get('hari_tempo', 5);
+    t = t || { minggu: mIni, status: 'Belum Bayar', jumlah: '', jatuhTempo: fmt.geser(mIni, hTempo) };
     const aktif = siswaList.filter((s) => s.status === 'Aktif' || s.id === t.siswaId);
-    const d = UI.buka(UI.headHtml(baru ? 'Tambah Tagihan' : 'Ubah Tagihan') + '<form class="modal-body stack" novalidate>' +
+    const d = UI.buka(UI.headHtml(baru ? 'Tambah Tagihan Mingguan' : 'Ubah Tagihan', 'Satu tagihan untuk satu siswa pada satu minggu (Senin–Minggu).') + '<form class="modal-body stack" novalidate>' +
       fld('tSiswa', 'Siswa *', sel('tSiswa', '<option value="">— Pilih siswa —</option>' + aktif.map((s) => '<option value="' + esc(s.id) + '"' + (s.id === t.siswaId ? ' selected' : '') + '>' + esc(s.nama + ' (' + s.kelas + ')') + '</option>').join(''))) +
-      '<div class="grid-2 sm-1">' + fld('tPer', 'Periode *', inp('tPer', t.periode, 'placeholder="November 2026"')) + fld('tJml', 'Jumlah (Rp) *', inp('tJml', t.jumlah, 'type="number" min="0" step="1000" inputmode="numeric" placeholder="450000"')) + '</div>' +
-      '<div class="grid-2 sm-1">' + fld('tTempo', 'Jatuh tempo', inp('tTempo', t.jatuhTempo, 'type="date"')) + fld('tStatus', 'Status', sel('tStatus', ['Belum Bayar', 'Lunas'].map((x) => '<option' + (x === t.status ? ' selected' : '') + '>' + x + '</option>').join(''))) + '</div>' +
-      fld('tBayar', 'Tanggal bayar', inp('tBayar', t.tglBayar, 'type="date"'), 'Diisi otomatis hari ini bila status Lunas dan kolom ini kosong.') +
-      fld('tCat', 'Catatan untuk siswa', inp('tCat', t.catatan, 'placeholder="Transfer ke rekening bimbel / bayar tunai di tempat"')) +
+      (lama ? fld('tPer', 'Periode (tagihan lama)', inp('tPer', t.periode), 'Tagihan ini dibuat sebelum sistem mingguan. Kosongkan lalu pilih minggu di bawah bila ingin mengubahnya menjadi tagihan mingguan.') : '') +
+      fld('tMinggu', 'Minggu tagihan' + (lama ? '' : ' *'), inp('tMinggu', lama ? '' : t.minggu, 'type="date"'), '<span id="tMingguInfo">' + infoMinggu(lama ? '' : t.minggu) + '</span>') +
+      '<div class="grid-2 sm-1">' + fld('tJml', 'Jumlah per minggu (Rp) *', inp('tJml', t.jumlah, 'type="number" min="0" step="1000" inputmode="numeric" placeholder="120000"')) +
+        fld('tTempo', 'Jatuh tempo', inp('tTempo', t.jatuhTempo, 'type="date"')) + '</div>' +
+      '<div class="grid-2 sm-1">' + fld('tStatus', 'Status', sel('tStatus', ['Belum Bayar', 'Lunas'].map((x) => '<option' + (x === t.status ? ' selected' : '') + '>' + x + '</option>').join(''))) +
+        fld('tBayar', 'Tanggal bayar', inp('tBayar', t.tglBayar, 'type="date"'), 'Otomatis hari ini bila Lunas & kosong.') + '</div>' +
+      fld('tCat', 'Catatan untuk siswa', inp('tCat', t.catatan, 'placeholder="Bayar tunai saat les / transfer ke rekening bimbel"')) +
       '</form><div class="modal-foot"><button class="btn btn-outline" data-close>Batal</button><button class="btn btn-primary" id="tSimpan">' + ic('save', 18) + ' Simpan</button></div>', { kind: 'drawer' });
-    d.el.querySelector('#tSimpan').addEventListener('click', async (e) => {
-      const v = (id) => d.el.querySelector('#' + id).value.trim();
+    const q = (id) => d.el.querySelector('#' + id);
+    let tempoDiubah = !baru;
+    q('tTempo').addEventListener('input', () => { tempoDiubah = true; });
+    q('tMinggu').addEventListener('change', () => {
+      const v = q('tMinggu').value, sn = v ? fmt.senin(v) : '';
+      if (sn) q('tMinggu').value = sn;
+      q('tMingguInfo').innerHTML = infoMinggu(sn);
+      if (sn && !tempoDiubah) q('tTempo').value = fmt.geser(sn, hTempo);
+    });
+    q('tSimpan').addEventListener('click', async (e) => {
+      const v = (id) => (q(id) ? q(id).value.trim() : '');
+      if (!v('tMinggu') && !v('tPer')) return toast('Pilih minggu tagihan.', 'error');
       tombolSibuk(btnOf(e), true);
-      const r = await API.tulis('bayar.simpan', { tagihan: { id: baru ? '' : t.id, siswaId: v('tSiswa'), periode: v('tPer'), jumlah: v('tJml'), jatuhTempo: v('tTempo'), status: v('tStatus'), tglBayar: v('tBayar'), catatan: v('tCat') } });
+      const r = await API.tulis('bayar.simpan', { tagihan: { id: baru ? '' : t.id, siswaId: v('tSiswa'), minggu: v('tMinggu'), periode: v('tPer'), jumlah: v('tJml'), jatuhTempo: v('tTempo'), status: v('tStatus'), tglBayar: v('tBayar'), catatan: v('tCat') } });
       tombolSibuk(btnOf(e), false);
       if (!r.success) return toast(r.message, 'error');
       d.tutup(); toast(r.message, 'success'); tabJT = 'tagihan'; Guru.route(['jadwal', 'tagihan']);
     });
   }
-  function formMassal() {
-    const d = UI.buka(UI.headHtml('Tagihan Massal', 'Membuat tagihan yang sama untuk semua siswa aktif di kelas terpilih.') + '<form class="modal-body stack" novalidate>' +
+  function formMassal(siswaList, mIni) {
+    const hTempo = ingat.get('hari_tempo', '5');
+    const d = UI.buka(UI.headHtml('Tagihan Mingguan', 'Buat tagihan per minggu untuk semua siswa aktif di kelas terpilih.') + '<form class="modal-body stack" novalidate>' +
       fld('mKls', 'Kelas', sel('mKls', opsiKelas('SEMUA', true))) +
-      '<div class="grid-2 sm-1">' + fld('mPer', 'Periode *', inp('mPer', periodeIni())) + fld('mJml', 'Jumlah (Rp) *', inp('mJml', '', 'type="number" min="0" step="1000" inputmode="numeric" placeholder="450000"')) + '</div>' +
-      fld('mTempo', 'Jatuh tempo', inp('mTempo', fmt.geser(fmt.hariIni(), 10), 'type="date"')) + fld('mCat', 'Catatan', inp('mCat', '')) +
-      '<div class="info-box">' + ic('info', 18) + '<span>Siswa yang sudah punya tagihan untuk periode yang sama akan dilewati, jadi aman bila tombol ditekan dua kali.</span></div>' +
+      '<div class="grid-2 sm-1">' + fld('mMulai', 'Mulai minggu *', inp('mMulai', mIni, 'type="date"')) +
+        fld('mN', 'Untuk berapa minggu', sel('mN', [1, 2, 3, 4, 6, 8, 12].map((n) => '<option value="' + n + '"' + (n === 1 ? ' selected' : '') + '>' + n + ' minggu' + (n === 4 ? ' (± 1 bulan)' : '') + '</option>').join(''))) + '</div>' +
+      '<div class="grid-2 sm-1">' + fld('mJml', 'Jumlah per minggu (Rp) *', inp('mJml', ingat.get('tarif_SEMUA', ''), 'type="number" min="0" step="1000" inputmode="numeric" placeholder="120000"')) +
+        fld('mHari', 'Jatuh tempo setiap', sel('mHari', HARI_TEMPO.map((h, i) => '<option value="' + i + '"' + (String(i) === String(hTempo) ? ' selected' : '') + '>Hari ' + h + '</option>').join(''))) + '</div>' +
+      fld('mCat', 'Catatan untuk siswa', inp('mCat', '', 'placeholder="Bayar tunai saat les / transfer ke rekening bimbel"')) +
+      '<div class="pratinjau" id="mPrev"></div>' +
+      '<div class="info-box">' + ic('info', 18) + '<span>Siswa yang sudah punya tagihan di minggu yang sama otomatis dilewati, jadi aman bila tombol ditekan dua kali.</span></div>' +
       '</form><div class="modal-foot"><button class="btn btn-outline" data-close>Batal</button><button class="btn btn-primary" id="mSimpan">' + ic('send', 18) + ' Buat Tagihan</button></div>', { kind: 'drawer' });
-    d.el.querySelector('#mSimpan').addEventListener('click', async (e) => {
-      const v = (id) => d.el.querySelector('#' + id).value.trim();
+    const q = (id) => d.el.querySelector('#' + id);
+    const pratinjau = () => {
+      const v = q('mMulai').value, sn = v ? fmt.senin(v) : '';
+      if (sn && v !== sn) q('mMulai').value = sn;
+      const n = +q('mN').value, kls = q('mKls').value, jml = +q('mJml').value || 0, h = +q('mHari').value;
+      const jmlSiswa = siswaList.filter((s) => s.status === 'Aktif' && (!kls || kls === 'SEMUA' || s.kelasId === kls)).length;
+      if (!sn) { q('mPrev').innerHTML = ''; return; }
+      const minggu = Array.from({ length: n }, (_, i) => fmt.geser(sn, 7 * i));
+      q('mPrev').innerHTML = '<p class="small muted" style="margin-bottom:8px">Pratinjau — ' + jmlSiswa + ' siswa aktif × ' + n + ' minggu = <b>' + (jmlSiswa * n) + ' tagihan</b>' + (jml ? ' • ' + fmt.rp(jml) + '/siswa/minggu' : '') + '</p>' +
+        '<div class="pv-list">' + minggu.slice(0, 6).map((m) => '<div><b>' + esc(fmt.rentangMinggu(m)) + '</b><span>Jatuh tempo ' + esc(fmt.tgl(fmt.geser(m, h), { hari: true, tahun: false })) + '</span></div>').join('') +
+        (minggu.length > 6 ? '<div class="muted">… dan ' + (minggu.length - 6) + ' minggu berikutnya</div>' : '') + '</div>';
+    };
+    q('mKls').addEventListener('change', () => { const t = ingat.get('tarif_' + q('mKls').value, ''); if (t) q('mJml').value = t; pratinjau(); });
+    ['mMulai', 'mN', 'mJml', 'mHari'].forEach((id) => q(id).addEventListener(id === 'mJml' ? 'input' : 'change', pratinjau));
+    pratinjau();
+    q('mSimpan').addEventListener('click', async (e) => {
+      const v = (id) => q(id).value.trim();
       tombolSibuk(btnOf(e), true, 'Membuat…');
-      const r = await API.tulis('bayar.massal', { kelasId: v('mKls'), periode: v('mPer'), jumlah: v('mJml'), jatuhTempo: v('mTempo'), catatan: v('mCat') });
+      const r = await API.tulis('bayar.massal', { kelasId: v('mKls'), mulai: v('mMulai'), jumlahMinggu: v('mN'), jumlah: v('mJml'), hariTempo: v('mHari'), catatan: v('mCat') });
       tombolSibuk(btnOf(e), false);
       if (!r.success) return toast(r.message, 'error');
+      ingat.set('tarif_' + v('mKls'), v('mJml')); ingat.set('hari_tempo', v('mHari'));
+      bMinggu = fmt.senin(v('mMulai'));
       d.tutup(); toast(r.message, 'success'); tabJT = 'tagihan'; Guru.route(['jadwal', 'tagihan']);
     });
   }
@@ -511,10 +615,11 @@
   }
   function formUnggah(box) {
     let berkas = null;
+    const maksMB = App.pengaturan().demo ? 2 : 10;
     box.innerHTML = '<div class="panel-h"><div><h2>' + ic('upload', 20) + ' Unggah Materi</h2><p>Tersimpan otomatis di Google Drive bimbel</p></div></div><form id="fU" novalidate>' +
       '<p class="up-step"><i>1</i> Pilih berkas</p>' +
       '<label class="drop" id="uDrop" tabindex="0" for="uFile"><span class="drop-ic">' + ic('upload', 26) + '</span>' +
-        '<b>Seret berkas ke sini, atau <u>pilih dari komputer</u></b><span>Maksimal 10 MB per berkas</span>' +
+        '<b>Seret berkas ke sini, atau <u>pilih dari komputer</u></b><span>Maksimal ' + maksMB + ' MB per berkas' + (maksMB < 10 ? ' (versi demo)' : '') + '</span>' +
         '<span class="types"><i>PDF</i><i>DOCX</i><i>PPTX</i><i>XLSX</i><i>JPG/PNG</i></span></label>' +
       '<input type="file" id="uFile" class="sr-only" tabindex="-1" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png">' +
       '<div class="file-chip hidden" id="uChip"><span class="ft" id="uExt">PDF</span><div class="grow"><b id="uNama"></b><span id="uInfo"></span></div>' +
@@ -534,7 +639,7 @@
       if (!f) return;
       const ext = (f.name.split('.').pop() || '').toLowerCase();
       if (!JENIS[ext]) { toast('Jenis berkas belum didukung. Gunakan PDF, Word, PowerPoint, Excel, atau gambar.', 'error'); return; }
-      if (f.size > 10 * 1024 * 1024) { toast('Ukuran berkas melebihi 10 MB. Kompres atau pecah modul terlebih dahulu.', 'error'); return; }
+      if (f.size > maksMB * 1024 * 1024) { toast('Ukuran berkas melebihi ' + maksMB + ' MB. Kompres atau pecah modul terlebih dahulu.', 'error'); return; }
       berkas = f;
       const ft = box.querySelector('#uExt'); ft.textContent = JENIS[ext][0]; ft.className = 'ft ft-' + JENIS[ext][1];
       box.querySelector('#uNama').textContent = f.name; box.querySelector('#uInfo').textContent = fmt.ukuran(f.size) + ' • siap diunggah';

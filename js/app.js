@@ -13,11 +13,12 @@
 
     init() {
       if (!API.konfigValid()) { renderSetup(); return; }
+      if (window.SC_BOOT) this.setApp(window.SC_BOOT);      // versi GAS: pengaturan sudah disisipkan server → tanpa jeda
       UI.terapkanTema(this.pengaturan());
       API.setOnAuthHilang((msg) => App.sesiBerakhir(msg));
       window.addEventListener('hashchange', route);
       route();
-      API.api('app.publik').then((r) => {
+      if (!window.SC_BOOT) API.api('app.publik').then((r) => {
         if (!r.success) return;
         const lama = JSON.stringify(App.app);
         App.setApp(r.data);
@@ -128,6 +129,7 @@
     // simpan isian bila layar dirender ulang (mis. pengaturan aplikasi baru selesai dimuat)
     const lamaUser = document.getElementById('lUser'), lamaPass = document.getElementById('lPass'), lamaIngat = document.getElementById('lIngat');
     const simpanan = lamaUser ? { u: lamaUser.value, p: lamaPass.value, i: lamaIngat.checked, fokus: document.activeElement && document.activeElement.id } : null;
+    const demo = app.demo && app.demo.akun && app.demo.akun.length ? app.demo : null;
     const sapa = (() => { const j = new Date().getHours(); return j < 11 ? 'Selamat pagi' : j < 15 ? 'Selamat siang' : j < 18 ? 'Selamat sore' : 'Selamat malam'; })();
     const intro = Date.now() - (App._loginRender || 0) > 4000;      // animasi masuk hanya sekali (bukan saat render ulang)
     App._loginRender = Date.now();
@@ -138,7 +140,7 @@
         '<canvas class="lg-net" aria-hidden="true"></canvas>' +
         '<div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>' +
         '<section class="login-hero">' +
-          '<span class="access-pill"><i></i> Akses Tertutup • Khusus Terdaftar</span>' +
+          '<span class="access-pill"><i></i> ' + (demo ? 'Versi Demo • Silakan Dicoba' : 'Akses Tertutup • Khusus Terdaftar') + '</span>' +
           '<div class="stage px" style="--d:10">' +
             '<div class="orbit o2">' + node('n1', ic('book', 16)) + node('n2', ic('trophy', 16)) + node('n3', '<b>π</b>') + node('n4', ic('quiz', 16)) + '</div>' +
             '<div class="orbit o1">' + node('n1', ic('star', 14)) + node('n3', '<b>x²</b>') + '</div>' +
@@ -158,7 +160,10 @@
             '<button type="button" role="tab" data-peran="siswa">' + ic('user', 18) + ' Siswa</button>' +
             '<button type="button" role="tab" data-peran="guru">' + ic('idcard', 18) + ' Guru / Pengelola</button>' +
           '</div>' +
-          '<div class="l-head"><span class="sapa">' + ic('sparkle', 14) + ' ' + sapa + '!</span><h2 id="lJudul"></h2><p class="lead">Gunakan akun yang sudah diverifikasi oleh pengelola bimbel.</p></div>' +
+          '<div class="l-head"><span class="sapa">' + ic('sparkle', 14) + ' ' + sapa + '!</span><h2 id="lJudul"></h2><p class="lead">' + (demo ? 'Pilih akun demo di bawah, atau ketik manual.' : 'Gunakan akun yang sudah diverifikasi oleh pengelola bimbel.') + '</p></div>' +
+          (demo ? '<div class="demo-box"><div class="demo-h"><b>' + ic('play', 16) + ' Masuk cepat dengan akun demo</b><span>Sandi: <code>' + esc(demo.sandi) + '</code></span></div><div class="demo-akun">' +
+            demo.akun.map((a, i) => '<button type="button" data-demo="' + i + '"><span class="da-ic">' + ic(a.label === 'Admin' ? 'shield' : a.label === 'Guru' ? 'idcard' : 'user', 18) + '</span><b>' + esc(a.label) + '</b><small>' + esc(a.ket) + '</small></button>').join('') +
+            '</div></div>' : '') +
           '<form id="fLogin" class="stack" novalidate>' +
             '<div class="field"><label for="lUser" id="lUserLbl"></label><div class="input-wrap" id="lUserWrap"></div></div>' +
             '<div class="field"><label for="lPass">Kata Sandi</label><div class="input-wrap">' + ic('lock', 20) +
@@ -170,7 +175,8 @@
             '<p class="err hidden" id="lErr" role="alert"></p>' +
             '<button class="btn btn-primary btn-block btn-lg btn-login" type="submit" id="lBtn"><span class="lbl">Masuk Sekarang ' + ic('right', 20) + '</span></button>' +
           '</form>' +
-          '<div class="login-help"><span>Belum memiliki akun bimbingan?</span><button class="btn btn-ghost btn-sm" id="lAktivasi">' + ic('headset', 16) + ' Hubungi Admin</button></div>' +
+          (demo ? '<p class="demo-note">' + ic('refresh', 14) + ' ' + esc(demo.reset) + '</p>'
+            : '<div class="login-help"><span>Belum memiliki akun bimbingan?</span><button class="btn btn-ghost btn-sm" id="lAktivasi">' + ic('headset', 16) + ' Hubungi Admin</button></div>') +
           '<p class="login-foot">' + ic('shield', 16) + ' Data tersimpan di Google Workspace milik ' + esc(app.nama_app) + '</p>' +
         '</div></section></div>' +
       '</main>';
@@ -210,7 +216,14 @@
       (app.kontak_admin ? '<div class="cred"><span>' + esc(app.kontak_admin) + '</span></div>' : '<div class="info-box">' + ic('info', 18) + '<span>Hubungi pengelola bimbel secara langsung di tempat les.</span></div>') +
       '</div><div class="modal-foot"><button class="btn btn-primary" data-close>Mengerti</button></div>');
     root.querySelector('#lLupa').addEventListener('click', bantuan);
-    root.querySelector('#lAktivasi').addEventListener('click', bantuan);
+    if (root.querySelector('#lAktivasi')) root.querySelector('#lAktivasi').addEventListener('click', bantuan);
+    root.querySelectorAll('[data-demo]').forEach((b) => b.addEventListener('click', () => {      // versi demo: isi & masuk sekali klik
+      const a = demo.akun[+b.dataset.demo]; if (!a) return;
+      root.querySelectorAll('[data-demo]').forEach((x) => x.classList.toggle('on', x === b));
+      setPeran(a.peran);
+      root.querySelector('#lUser').value = a.username; root.querySelector('#lPass').value = demo.sandi; cekUser();
+      root.querySelector('#fLogin').requestSubmit();
+    }));
     root.querySelector('#fLogin').addEventListener('submit', async (e) => {
       e.preventDefault();
       const user = root.querySelector('#lUser').value.trim(), pass = root.querySelector('#lPass').value;

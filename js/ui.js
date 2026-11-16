@@ -118,6 +118,17 @@
     angka(n, d) { if (n === null || n === undefined || n === '') return '-'; return Number(n).toLocaleString('id-ID', { maximumFractionDigits: d === undefined ? 1 : d }); },
     hariIni() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); },
     geser(tgl, hari) { const d = tglObj(tgl); d.setDate(d.getDate() + hari); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); },
+    // siklus tagihan mingguan (Senin–Minggu) — format sama dengan server
+    senin(tgl) { const d = tglObj(tgl); return d ? fmt.geser(tgl, -((d.getDay() + 6) % 7)) : ''; },
+    rentangMinggu(senin, tahun) {
+      const a = tglObj(senin), b = tglObj(fmt.geser(senin, 6)); if (!a) return '';
+      const th = (d) => (tahun === false ? '' : ' ' + d.getFullYear());
+      if (a.getFullYear() !== b.getFullYear()) return a.getDate() + ' ' + BLN[a.getMonth()] + ' ' + a.getFullYear() + ' – ' + b.getDate() + ' ' + BLN[b.getMonth()] + ' ' + b.getFullYear();
+      if (a.getMonth() !== b.getMonth()) return a.getDate() + ' ' + BLN[a.getMonth()] + ' – ' + b.getDate() + ' ' + BLN[b.getMonth()] + th(b);
+      return a.getDate() + '–' + b.getDate() + ' ' + BLN[a.getMonth()] + th(a);
+    },
+    labelMinggu(senin) { return 'Minggu ' + fmt.rentangMinggu(senin); },
+    namaHari(tgl) { const d = tglObj(tgl); return d ? HARI[d.getDay()] : ''; },
     inisial(nama) { return String(nama || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase(); },
     durasi(det) { det = Math.round(det || 0); const m = Math.floor(det / 60); return m ? m + ' Menit' : det + ' Detik'; },
     namaDepan(nama) { return String(nama || '').trim().split(/\s+/)[0] || ''; }

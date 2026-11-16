@@ -179,7 +179,7 @@ Bila yang tampil masih versi lama, tekan **Ctrl+Shift+R**.
 | Menu guru | Kegunaan |
 |---|---|
 | Presensi Kehadiran | Pilih tanggal, kelas, dan sesi, lalu tandai Hadir, Izin, atau Alfa. Bisa diubah lagi tanpa data ganda. |
-| Jadwal & Tagihan | Jadwal bisa diulang mingguan. Tagihan bisa dibuat per siswa atau massal per kelas, lalu ditandai lunas. |
+| Jadwal & Tagihan | Jadwal bisa diulang mingguan. Tagihan dibuat **per minggu** (Senin–Minggu, jatuh tempo bawaan hari Sabtu), per siswa atau satu kelas sekaligus untuk 1–12 minggu. Tunggakan direkap per siswa dan bisa dilunasi beberapa minggu sekaligus. |
 | Materi Pembelajaran | Unggah PDF, Word, PPT, atau gambar (maks. 10 MB) ke Drive. Terlihat berapa siswa yang sudah membuka. |
 | Latihan Soal | Soal pilihan ganda dengan kunci, bobot, dan pembahasan. Bisa ditempel dari Word/Docs. Nilai dihitung di server. |
 | Nilai Siswa | Tabel nilai siswa × latihan. Klik nilai untuk melihat jawaban. Bisa diekspor ke CSV. |
@@ -202,7 +202,7 @@ Buka **Pengaturan → Import Data** (khusus admin).
    | Kelas | `Kelas` |
    | Nomor HP | `No HP`, `WA`, `WhatsApp` |
    | Orang tua | `Nama Orang Tua`, `HP Orang Tua` |
-   | Tagihan | `Periode` atau `Bulan`, `Jumlah` atau `Nominal`, `Status` |
+   | Tagihan | `Periode` (atau `Minggu`/`Bulan`), `Jumlah` atau `Nominal`, `Status` |
 
 4. Klik **Pindai (Dry-run)**. Anda akan melihat berapa data yang ditambah, diperbarui, dan dilewati, **tanpa ada yang ditulis**.
 5. Klik **Jalankan Import**. Lalu klik **Unduh daftar akun** untuk menyimpan ID dan kata sandi awal siswa baru. Daftar ini hanya tersedia sekali.
